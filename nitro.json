@@ -1,0 +1,17 @@
+{
+  "cxxNamespace": ["nitrozlib"],
+  "ios": {
+    "iosModuleName": "NitroZlib"
+  },
+  "android": {
+    "androidNamespace": ["nitrozlib"],
+    "androidCxxLibName": "nitrozlib"
+  },
+  "autolinking": {
+    "NitroZlib": {
+      "swift": "NitroZlib",
+      "kotlin": "NitroZlib"
+    }
+  },
+  "ignorePaths": ["node_modules"]
+}
