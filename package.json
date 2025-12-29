@@ -1,5 +1,5 @@
 {
-  "name": "react-native-nitro-gzip",
+  "name": "react-native-nitro-zlib",
   "version": "0.1.0",
   "description": "inflate deflate using zlib library via nitro module",
   "main": "./lib/module/index.js",

@@ -7223,32 +7223,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-gzip@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "react-native-nitro-gzip@workspace:."
-  dependencies:
-    "@commitlint/config-conventional": "npm:^19.8.1"
-    "@react-native/babel-preset": "npm:0.83.0"
-    "@types/jest": "npm:^29.5.14"
-    "@types/react": "npm:^19.2.0"
-    commitlint: "npm:^19.8.1"
-    del-cli: "npm:^6.0.0"
-    jest: "npm:^29.7.0"
-    lefthook: "npm:^2.0.3"
-    nitrogen: "npm:^0.32.0"
-    react: "npm:19.2.0"
-    react-native: "npm:0.83.0"
-    react-native-builder-bob: "npm:^0.40.17"
-    react-native-nitro-modules: "npm:^0.32.0"
-    turbo: "npm:^2.5.6"
-    typescript: "npm:^5.9.2"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-    react-native-nitro-modules: ^0.32.0
-  languageName: unknown
-  linkType: soft
-
 "react-native-nitro-modules@npm:^0.32.0":
   version: 0.32.0
   resolution: "react-native-nitro-modules@npm:0.32.0"
@@ -7279,6 +7253,32 @@ __metadata:
     react-native-fast-encoder: "npm:^0.3.1"
     react-native-monorepo-config: "npm:^0.3.1"
     react-native-nitro-modules: "npm:^0.32.0"
+  languageName: unknown
+  linkType: soft
+
+"react-native-nitro-zlib@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "react-native-nitro-zlib@workspace:."
+  dependencies:
+    "@commitlint/config-conventional": "npm:^19.8.1"
+    "@react-native/babel-preset": "npm:0.83.0"
+    "@types/jest": "npm:^29.5.14"
+    "@types/react": "npm:^19.2.0"
+    commitlint: "npm:^19.8.1"
+    del-cli: "npm:^6.0.0"
+    jest: "npm:^29.7.0"
+    lefthook: "npm:^2.0.3"
+    nitrogen: "npm:^0.32.0"
+    react: "npm:19.2.0"
+    react-native: "npm:0.83.0"
+    react-native-builder-bob: "npm:^0.40.17"
+    react-native-nitro-modules: "npm:^0.32.0"
+    turbo: "npm:^2.5.6"
+    typescript: "npm:^5.9.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ^0.32.0
   languageName: unknown
   linkType: soft
 
