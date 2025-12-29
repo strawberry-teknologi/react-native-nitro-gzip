@@ -48,14 +48,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/happyshittake/react-native-nitro-zlib.git"
+    "url": "git+https://github.com/strawberry-teknologi/react-native-nitro-gzip.git"
   },
-  "author": "tanjung <me@tpk.fun> (https://github.com/happyshittake)",
+  "author": "tanjung <tanjung@straweberry.co.id> (https://github.com/strawberry-teknologi)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/happyshittake/react-native-nitro-zlib/issues"
+    "url": "https://github.com/strawberry-teknologi/react-native-nitro-gzip/issues"
   },
-  "homepage": "https://github.com/happyshittake/react-native-nitro-zlib#readme",
+  "homepage": "https://github.com/strawberry-teknologi/react-native-nitro-gzip#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
