@@ -1,6 +1,7 @@
-import type { HybridObject } from 'react-native-nitro-modules';
+import type { HybridObject } from "react-native-nitro-modules";
 
 export interface NitroZlib
-  extends HybridObject<{ ios: 'swift'; android: 'kotlin' }> {
-  multiply(a: number, b: number): number;
+  extends HybridObject<{ ios: "c++"; android: "c++" }> {
+  inflate(data: ArrayBuffer): ArrayBuffer;
+  deflate(data: ArrayBuffer): ArrayBuffer;
 }
