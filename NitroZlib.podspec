@@ -22,6 +22,8 @@ Pod::Spec.new do |s|
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
 
+  s.libraries = 'z'
+
   load 'nitrogen/generated/ios/NitroZlib+autolinking.rb'
   add_nitrogen_files(s)
 
