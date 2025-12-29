@@ -117,11 +117,6 @@
       "<rootDir>/lib/"
     ]
   },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
   "create-react-native-library": {
     "type": "nitro-module",
     "languages": "kotlin-swift",
