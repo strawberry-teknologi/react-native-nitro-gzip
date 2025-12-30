@@ -68,7 +68,7 @@ NitroZlib::inflate(const std::shared_ptr<ArrayBuffer> &data) {
         "Zlib inflate failed (corrupted data or wrong format)");
   }
 
-  auto resultBuffer = ArrayBuffer::copy(outBuffer.data(), outBuffer.size());
+  auto resultBuffer = ArrayBuffer::copy(outBuffer.data(), finalSize);
 
   return resultBuffer;
 }
