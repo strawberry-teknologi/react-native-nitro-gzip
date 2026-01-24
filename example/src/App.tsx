@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import TextEncoder from "react-native-fast-encoder";
-import { deflate, inflate } from "react-native-nitro-zlib";
+import { deflate, inflate, deflateAsync, inflateAsync } from "react-native-nitro-zlib";
 
 export default function App() {
   const [inputText, setInputText] = useState(
@@ -18,6 +18,7 @@ export default function App() {
   const [compressedSize, setCompressedSize] = useState<number | null>(null);
   const [decompressedText, setDecompressedText] = useState<string>("");
   const [originalSize, setOriginalSize] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const stringToArrayBuffer = (str: string): ArrayBuffer => {
     const encoder = new TextEncoder();
@@ -29,15 +30,20 @@ export default function App() {
     return decoder.decode(new Uint8Array(buffer));
   };
 
-  const handleCompress = () => {
+  const handleCompress = async (useAsync = false) => {
+    setIsProcessing(true);
     try {
       const inputBuffer = stringToArrayBuffer(inputText);
       setOriginalSize(inputBuffer.byteLength);
 
-      const compressed = deflate(inputBuffer);
+      const compressed = useAsync 
+        ? await deflateAsync(inputBuffer)
+        : deflate(inputBuffer);
       setCompressedSize(compressed.byteLength);
 
-      const decompressed = inflate(compressed);
+      const decompressed = useAsync
+        ? await inflateAsync(compressed)
+        : inflate(compressed);
       const result = arrayBufferToString(decompressed);
       setDecompressedText(result);
 
@@ -48,13 +54,15 @@ export default function App() {
 
       Alert.alert(
         "Success",
-        `Original: ${inputBuffer.byteLength} bytes\nCompressed: ${compressed.byteLength} bytes\nCompression: ${compressionRatio}%`
+        `${useAsync ? 'Async' : 'Sync'} Operation\nOriginal: ${inputBuffer.byteLength} bytes\nCompressed: ${compressed.byteLength} bytes\nCompression: ${compressionRatio}%`
       );
     } catch (error) {
       Alert.alert(
         "Error",
         error instanceof Error ? error.message : "Unknown error"
       );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -73,7 +81,19 @@ export default function App() {
         />
 
         <View style={styles.buttonContainer}>
-          <Button title="Compress & Decompress" onPress={handleCompress} />
+          <View style={{ marginBottom: 10 }}>
+            <Button 
+              title={isProcessing ? "Processing..." : "Sync Compress & Decompress"} 
+              onPress={() => handleCompress(false)} 
+              disabled={isProcessing}
+            />
+          </View>
+          <Button 
+            title={isProcessing ? "Processing..." : "Async Compress & Decompress"} 
+            onPress={() => handleCompress(true)} 
+            disabled={isProcessing}
+            color="#4caf50"
+          />
         </View>
 
         {originalSize !== null && (

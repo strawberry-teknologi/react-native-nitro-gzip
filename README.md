@@ -25,23 +25,30 @@ npx pod-install
 
 ## Usage
 
-`deflate()` compresses an `ArrayBuffer` into a GZIP-wrapped stream.
-`inflate()` decompresses a GZIP-wrapped stream back into the original bytes.
+`deflate()`/`deflateAsync()` compresses an `ArrayBuffer` into a GZIP-wrapped stream.
+`inflate()`/`inflateAsync()` decompresses a GZIP-wrapped stream back into the original bytes.
+
+### Synchronous Usage
 
 ```ts
-import { deflate, inflate } from '@strawberrytech/react-native-nitro-zlib';
+import { deflate, inflate } from 'react-native-nitro-zlib';
 
-// React Native doesn't always ship TextEncoder/TextDecoder. A common option is:
-//   yarn add react-native-fast-encoder
-import FastTextCodec from 'react-native-fast-encoder';
-
-const codec = new FastTextCodec();
-const input = codec.encode('Hello from Nitro + zlib').buffer;
-
+// ... (setup codec)
+const input = codec.encode('Hello sync').buffer;
 const compressed = deflate(input);
 const output = inflate(compressed);
+```
 
-const text = codec.decode(new Uint8Array(output));
+### Asynchronous Usage (Recommended for large data)
+
+The async versions run on a background thread pool, keeping the JS thread responsive.
+
+```ts
+import { deflateAsync, inflateAsync } from 'react-native-nitro-zlib';
+
+const input = codec.encode('Hello async').buffer;
+const compressed = await deflateAsync(input);
+const output = await inflateAsync(compressed);
 ```
 
 ## API
@@ -49,11 +56,15 @@ const text = codec.decode(new Uint8Array(output));
 ```ts
 export function deflate(data: ArrayBuffer): ArrayBuffer;
 export function inflate(data: ArrayBuffer): ArrayBuffer;
+
+export function deflateAsync(data: ArrayBuffer): Promise<ArrayBuffer>;
+export function inflateAsync(data: ArrayBuffer): Promise<ArrayBuffer>;
 ```
 
 ## Notes
 
 - This module uses zlib windowBits `31`, so the produced/consumed format is GZIP (not raw deflate, not zlib-wrapped).
+- **Thread Safety**: When calling `*Async` methods, the `ArrayBuffer` is copied if it is not already an owning buffer to ensure it remains valid on the background thread.
 - For an end-to-end example, see `example/src/App.tsx`.
 
 ## Contributing

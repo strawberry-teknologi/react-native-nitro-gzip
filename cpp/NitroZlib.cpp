@@ -73,6 +73,16 @@ NitroZlib::inflate(const std::shared_ptr<ArrayBuffer> &data) {
   return resultBuffer;
 }
 
+std::shared_ptr<Promise<std::shared_ptr<ArrayBuffer>>>
+NitroZlib::inflateAsync(const std::shared_ptr<ArrayBuffer> &data) {
+  // If the data is not owned by us, we must copy it before going to a
+  // background thread.
+  auto safeData = data->isOwner() ? data : ArrayBuffer::copy(data);
+
+  return Promise<std::shared_ptr<ArrayBuffer>>::async(
+      [this, safeData]() { return this->inflate(safeData); });
+}
+
 std::shared_ptr<ArrayBuffer>
 NitroZlib::deflate(const std::shared_ptr<ArrayBuffer> &data) {
   auto source = data->data();
@@ -120,4 +130,15 @@ NitroZlib::deflate(const std::shared_ptr<ArrayBuffer> &data) {
 
   return resultBuffer;
 }
+
+std::shared_ptr<Promise<std::shared_ptr<ArrayBuffer>>>
+NitroZlib::deflateAsync(const std::shared_ptr<ArrayBuffer> &data) {
+  // If the data is not owned by us, we must copy it before going to a
+  // background thread.
+  auto safeData = data->isOwner() ? data : ArrayBuffer::copy(data);
+
+  return Promise<std::shared_ptr<ArrayBuffer>>::async(
+      [this, safeData]() { return this->deflate(safeData); });
+}
+
 } // namespace margelo::nitro::nitrozlib
