@@ -2584,7 +2584,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@strawberrytech/react-native-nitro-zlib@workspace:*, @strawberrytech/react-native-nitro-zlib@workspace:.":
+"@strawberrytech/react-native-nitro-zlib@workspace:.":
   version: 0.0.0-use.local
   resolution: "@strawberrytech/react-native-nitro-zlib@workspace:."
   dependencies:
@@ -7272,7 +7272,6 @@ __metadata:
     "@react-native/babel-preset": "npm:0.83.0"
     "@react-native/metro-config": "npm:0.83.0"
     "@react-native/typescript-config": "npm:0.83.0"
-    "@strawberrytech/react-native-nitro-zlib": "workspace:*"
     "@types/react": "npm:^19.2.0"
     react: "npm:19.2.0"
     react-native: "npm:0.83.0"

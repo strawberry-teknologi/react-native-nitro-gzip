@@ -1,6 +1,6 @@
 {
   "name": "react-native-nitro-zlib-example",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -10,7 +10,6 @@
     "build:ios": "xcodebuild -workspace ios/NitroZlibExample.xcworkspace -scheme NitroZlibExample -configuration Debug -sdk iphonesimulator ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO"
   },
   "dependencies": {
-    "@strawberrytech/react-native-nitro-zlib": "workspace:*",
     "react": "19.2.0",
     "react-native": "0.83.0",
     "react-native-fast-encoder": "^0.3.1",

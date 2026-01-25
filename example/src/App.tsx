@@ -1,6 +1,7 @@
 import {
   deflate,
   deflateAsync,
+  Format,
   inflate,
   inflateAsync,
 } from "@strawberrytech/react-native-nitro-zlib";
@@ -28,6 +29,8 @@ export default function App() {
     sync: { deflate: number; inflate: number };
     async: { deflate: number; inflate: number };
   } | null>(null);
+  const [selectedFormat, setSelectedFormat] = useState<"gzip" | "zlib" | "raw">("gzip");
+  const [compressionLevel, setCompressionLevel] = useState(9);
 
   const stringToArrayBuffer = (str: string): ArrayBuffer => {
     const encoder = new TextEncoder();
@@ -46,13 +49,17 @@ export default function App() {
       setOriginalSize(inputBuffer.byteLength);
 
       const compressed = useAsync
-        ? await deflateAsync(inputBuffer)
-        : deflate(inputBuffer);
+        ? await deflateAsync(inputBuffer, selectedFormat, compressionLevel)
+        : deflate(inputBuffer, selectedFormat, compressionLevel);
       setCompressedSize(compressed.byteLength);
 
+      // For RAW format, we must use RAW for inflate (AUTO can't detect raw deflate)
+      // For GZIP/ZLIB, AUTO works fine
+      const inflateFormat = selectedFormat === "raw" ? Format.RAW : Format.AUTO;
+      
       const decompressed = useAsync
-        ? await inflateAsync(compressed)
-        : inflate(compressed);
+        ? await inflateAsync(compressed, inflateFormat)
+        : inflate(compressed, inflateFormat);
       const result = arrayBufferToString(decompressed);
       setDecompressedText(result);
 
@@ -65,19 +72,19 @@ export default function App() {
 
       for (let i = 0; i < runs; i++) {
         const startSyncDeflate = performance.now();
-        const syncCompressed = deflate(inputBuffer);
+        const syncCompressed = deflate(inputBuffer, selectedFormat, compressionLevel);
         syncDeflateTotal += performance.now() - startSyncDeflate;
 
         const startSyncInflate = performance.now();
-        inflate(syncCompressed);
+        inflate(syncCompressed, inflateFormat);
         syncInflateTotal += performance.now() - startSyncInflate;
 
         const startAsyncDeflate = performance.now();
-        const asyncCompressed = await deflateAsync(inputBuffer);
+        const asyncCompressed = await deflateAsync(inputBuffer, selectedFormat, compressionLevel);
         asyncDeflateTotal += performance.now() - startAsyncDeflate;
 
         const startAsyncInflate = performance.now();
-        await inflateAsync(asyncCompressed);
+        await inflateAsync(asyncCompressed, inflateFormat);
         asyncInflateTotal += performance.now() - startAsyncInflate;
       }
 
@@ -99,7 +106,7 @@ export default function App() {
 
       Alert.alert(
         "Success",
-        `${useAsync ? "Async" : "Sync"} Operation\nOriginal: ${inputBuffer.byteLength} bytes\nCompressed: ${compressed.byteLength} bytes\nCompression: ${compressionRatio}%`,
+        `${useAsync ? "Async" : "Sync"} Operation\nFormat: ${selectedFormat.toUpperCase()}\nLevel: ${compressionLevel}\nOriginal: ${inputBuffer.byteLength} bytes\nCompressed: ${compressed.byteLength} bytes\nCompression: ${compressionRatio}%`,
       );
     } catch (error) {
       Alert.alert(
@@ -115,6 +122,37 @@ export default function App() {
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Nitro Zlib Demo</Text>
+
+        <Text style={styles.label}>Format:</Text>
+        <View style={styles.formatContainer}>
+          <Button
+            title="GZIP"
+            onPress={() => setSelectedFormat("gzip")}
+            color={selectedFormat === "gzip" ? "#2196f3" : "#9e9e9e"}
+          />
+          <Button
+            title="ZLIB"
+            onPress={() => setSelectedFormat("zlib")}
+            color={selectedFormat === "zlib" ? "#2196f3" : "#9e9e9e"}
+          />
+          <Button
+            title="RAW"
+            onPress={() => setSelectedFormat("raw")}
+            color={selectedFormat === "raw" ? "#2196f3" : "#9e9e9e"}
+          />
+        </View>
+
+        <Text style={styles.label}>Compression Level: {compressionLevel}</Text>
+        <View style={styles.levelContainer}>
+          {[1, 3, 6, 9].map((level) => (
+            <Button
+              key={level}
+              title={`${level}`}
+              onPress={() => setCompressionLevel(level)}
+              color={compressionLevel === level ? "#4caf50" : "#9e9e9e"}
+            />
+          ))}
+        </View>
 
         <Text style={styles.label}>Input Text:</Text>
         <TextInput
@@ -259,6 +297,16 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 20,
     marginBottom: 20,
+  },
+  formatContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 15,
+  },
+  levelContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 15,
   },
   statsContainer: {
     backgroundColor: "#e3f2fd",

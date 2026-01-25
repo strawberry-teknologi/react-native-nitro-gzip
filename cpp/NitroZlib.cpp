@@ -14,16 +14,36 @@ static size_t getEstimateDeflateSize(size_t sourceLen) {
   return sourceLen + (sourceLen >> 3) + (sourceLen >> 7) + 12;
 }
 
+// Helper to map ZlibFormat enum to zlib window bits
+int NitroZlib::getWindowBits(ZlibFormat format, bool forDeflate) {
+  switch (format) {
+    case ZlibFormat::RAW:
+      return -15;  // Raw deflate, no header/trailer
+    case ZlibFormat::ZLIB:
+      return 15;   // Zlib wrapper (2-byte header + Adler-32)
+    case ZlibFormat::GZIP:
+      return 31;   // GZIP wrapper (15 + 16)
+    case ZlibFormat::AUTO:
+      if (forDeflate) {
+        // AUTO not valid for deflate, fall back to GZIP
+        return 31;
+      }
+      return 47;   // Auto-detect zlib/gzip (15 + 32)
+    default:
+      return 31;   // Default to GZIP
+  }
+}
+
 std::shared_ptr<ArrayBuffer>
-NitroZlib::inflate(const std::shared_ptr<ArrayBuffer> &data) {
+NitroZlib::inflate(const std::shared_ptr<ArrayBuffer> &data, ZlibFormat format) {
   auto source = data->data();
   auto sourceLen = data->size();
 
   z_stream zs;
   memset(&zs, 0, sizeof(zs));
 
-  // 31 here enables GZIP headers (15 + 16)
-  if (inflateInit2(&zs, 31) != Z_OK) {
+  int windowBits = getWindowBits(format, false);
+  if (inflateInit2(&zs, windowBits) != Z_OK) {
     throw std::runtime_error("Failed to initialize zlib inflate");
   }
 
@@ -74,24 +94,31 @@ NitroZlib::inflate(const std::shared_ptr<ArrayBuffer> &data) {
 }
 
 std::shared_ptr<Promise<std::shared_ptr<ArrayBuffer>>>
-NitroZlib::inflateAsync(const std::shared_ptr<ArrayBuffer> &data) {
+NitroZlib::inflateAsync(const std::shared_ptr<ArrayBuffer> &data, ZlibFormat format) {
   // If the data is not owned by us, we must copy it before going to a
   // background thread.
   auto safeData = data->isOwner() ? data : ArrayBuffer::copy(data);
 
   return Promise<std::shared_ptr<ArrayBuffer>>::async(
-      [this, safeData]() { return this->inflate(safeData); });
+      [this, safeData, format]() { return this->inflate(safeData, format); });
 }
 
 std::shared_ptr<ArrayBuffer>
-NitroZlib::deflate(const std::shared_ptr<ArrayBuffer> &data) {
+NitroZlib::deflate(const std::shared_ptr<ArrayBuffer> &data, ZlibFormat format, double level) {
   auto source = data->data();
   auto sourceLen = data->size();
 
   z_stream zs;
   memset(&zs, 0, sizeof(zs));
-  // 31 here enables GZIP headers (15 + 16)
-  if (deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 31, 8,
+  
+  int windowBits = getWindowBits(format, true);
+  int compressionLevel = static_cast<int>(level);
+  
+  // Clamp level to valid range [1-9]
+  if (compressionLevel < 1) compressionLevel = 1;
+  if (compressionLevel > 9) compressionLevel = 9;
+  
+  if (deflateInit2(&zs, compressionLevel, Z_DEFLATED, windowBits, 8,
                    Z_DEFAULT_STRATEGY) != Z_OK) {
     throw std::runtime_error("Failed to initialize zlib deflate");
   }
@@ -132,13 +159,13 @@ NitroZlib::deflate(const std::shared_ptr<ArrayBuffer> &data) {
 }
 
 std::shared_ptr<Promise<std::shared_ptr<ArrayBuffer>>>
-NitroZlib::deflateAsync(const std::shared_ptr<ArrayBuffer> &data) {
+NitroZlib::deflateAsync(const std::shared_ptr<ArrayBuffer> &data, ZlibFormat format, double level) {
   // If the data is not owned by us, we must copy it before going to a
   // background thread.
   auto safeData = data->isOwner() ? data : ArrayBuffer::copy(data);
 
   return Promise<std::shared_ptr<ArrayBuffer>>::async(
-      [this, safeData]() { return this->deflate(safeData); });
+      [this, safeData, format, level]() { return this->deflate(safeData, format, level); });
 }
 
 } // namespace margelo::nitro::nitrozlib

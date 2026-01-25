@@ -1,6 +1,6 @@
 # Agents Guide
 
-This repo is a React Native library (`react-native-nitro-zlib`) that exposes Gzip-compatible `deflate`/`inflate` via [Nitro Modules](https://nitro.margelo.com/). The JS surface is thin; the implementation lives in C++ (zlib) with Nitrogen-generated bindings.
+This repo is a React Native library (`react-native-nitro-zlib`) that exposes zlib compression/decompression (`deflate`/`inflate`) with support for multiple formats (GZIP, Zlib, Raw deflate) via [Nitro Modules](https://nitro.margelo.com/). The JS surface is thin; the implementation lives in C++ (zlib) with Nitrogen-generated bindings.
 
 ## Quick Start
 
@@ -20,12 +20,12 @@ This repo is a React Native library (`react-native-nitro-zlib`) that exposes Gzi
 ## Repo Layout (Key Files)
 
 - JS entrypoints
-  - `src/index.tsx`: exports `inflate(data: ArrayBuffer)` and `deflate(data: ArrayBuffer)`.
-  - `src/NitroZlib.nitro.ts`: Nitro interface spec (drives codegen).
+  - `src/index.tsx`: exports `inflate()`, `deflate()`, `inflateAsync()`, `deflateAsync()`, and `Format` constants.
+  - `src/NitroZlib.nitro.ts`: Nitro interface spec (drives codegen). Uses TypeScript union types for format parameter.
 
 - C++ implementation
   - `cpp/NitroZlib.hpp`: implements the generated `HybridNitroZlibSpec`.
-  - `cpp/NitroZlib.cpp`: zlib calls; uses `inflateInit2(..., 31)` and `deflateInit2(..., 31, ...)` (GZIP headers enabled).
+  - `cpp/NitroZlib.cpp`: zlib calls with configurable format (via `getWindowBits()` helper) and compression level support.
 
 - Android glue
   - `android/build.gradle`: includes `../nitrogen/generated/android/nitrozlib+autolinking.gradle`; adds `android/generated/{java,jni}` sources.
@@ -38,7 +38,7 @@ This repo is a React Native library (`react-native-nitro-zlib`) that exposes Gzi
   - Note: there is currently no handwritten `ios/` directory in this repo; iOS integration is via Nitrogen-generated files + the shared C++ implementation.
 
 - Example app
-  - `example/src/App.tsx`: demonstrates `deflate` + `inflate` with `react-native-fast-encoder`.
+  - `example/src/App.tsx`: demonstrates all compression formats (GZIP, Zlib, Raw) and compression levels with interactive UI.
 
 ## Generated/Build Outputs (Do Not Hand-Edit)
 
@@ -73,8 +73,59 @@ GitHub Actions (`.github/workflows/ci.yml`) runs:
 - `yarn prepare` (bob build)
 - Native example builds (after `yarn nitrogen`) via Turbo tasks: `build:android`, `build:ios`
 
+## Current API (Multi-Format Support)
+
+The library now supports multiple compression formats:
+
+```typescript
+import { inflate, deflate, Format } from 'react-native-nitro-zlib';
+
+// Format constants
+Format.GZIP  // GZIP wrapper (window bits 31) - default for deflate
+Format.ZLIB  // Zlib wrapper (window bits 15)
+Format.RAW   // Raw deflate (window bits -15) - no headers
+Format.AUTO  // Auto-detect (window bits 47) - inflate only, default
+
+// API signatures
+inflate(data: ArrayBuffer, format?: ZlibFormat): ArrayBuffer
+inflateAsync(data: ArrayBuffer, format?: ZlibFormat): Promise<ArrayBuffer>
+deflate(data: ArrayBuffer, format?: ZlibFormat, level?: number): ArrayBuffer
+deflateAsync(data: ArrayBuffer, format?: ZlibFormat, level?: number): Promise<ArrayBuffer>
+
+// Examples
+const gzipped = deflate(data);                      // GZIP, level 9 (default)
+const fast = deflate(data, Format.GZIP, 1);         // GZIP, fastest
+const zlibData = deflate(data, Format.ZLIB, 6);     // Zlib wrapper, balanced
+const rawData = deflate(data, Format.RAW, 9);       // Raw deflate, best
+
+const result = inflate(compressed);                  // AUTO-detects format
+const result2 = inflate(rawData, Format.RAW);       // Explicit format
+```
+
+### Format-to-Window Bits Mapping (C++)
+
+The C++ implementation uses `getWindowBits()` helper to map format strings:
+
+| Format | Window Bits | Description |
+|--------|-------------|-------------|
+| `"raw"` | `-15` | Raw deflate (no wrapper) |
+| `"zlib"` | `15` | Zlib wrapper (2-byte header + Adler-32) |
+| `"gzip"` | `31` | GZIP wrapper (gzip header + CRC-32 + size trailer) |
+| `"auto"` | `47` | Auto-detect zlib/gzip (inflate only) |
+
+**Note**: TypeScript union types (`"raw" | "zlib" | "gzip" | "auto"`) are used instead of enums because Nitrogen doesn't support string enums in C++ generation.
+
 ## Project Gotchas
 
-- `inflate`/`deflate` currently operate on GZIP-wrapped streams (zlib window bits `31`). If you add "raw deflate" or "zlib wrapper" support, it should be an explicit API choice.
+- **Breaking change**: The API now requires format and level parameters. Inflate defaults to AUTO (auto-detects zlib/gzip), deflate defaults to GZIP with level 9.
+- **RAW format requires explicit matching**: `Format.AUTO` cannot detect raw deflate because it has no headers. When using `Format.RAW` for deflate, you **must** use `Format.RAW` for inflate as well.
+- **TypeScript unions, not enums**: `ZlibFormat` is a union type (`"raw" | "zlib" | "gzip" | "auto"`) because Nitrogen cannot generate C++ code from TypeScript string enums.
 - The root folder name may say "gzip", but the published package name is `react-native-nitro-zlib` (see `package.json`). Use the package name for imports and user-facing docs.
-- The root `README.md` still contains placeholder usage (`multiply`) and may not match the current API (`inflate`/`deflate`).
+
+## Format Compatibility Matrix
+
+| Deflate Format | Compatible Inflate Formats | Notes |
+|----------------|---------------------------|-------|
+| `Format.GZIP` | `Format.AUTO`, `Format.GZIP` | AUTO works - GZIP has magic headers |
+| `Format.ZLIB` | `Format.AUTO`, `Format.ZLIB` | AUTO works - Zlib has headers |
+| `Format.RAW` | **`Format.RAW` only** | AUTO fails - no headers to detect |
