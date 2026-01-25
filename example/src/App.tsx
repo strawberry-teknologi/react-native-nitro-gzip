@@ -19,6 +19,10 @@ export default function App() {
   const [decompressedText, setDecompressedText] = useState<string>("");
   const [originalSize, setOriginalSize] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [benchmarkResult, setBenchmarkResult] = useState<{
+    sync: { deflate: number; inflate: number };
+    async: { deflate: number; inflate: number };
+  } | null>(null);
 
   const stringToArrayBuffer = (str: string): ArrayBuffer => {
     const encoder = new TextEncoder();
@@ -46,6 +50,42 @@ export default function App() {
         : inflate(compressed);
       const result = arrayBufferToString(decompressed);
       setDecompressedText(result);
+
+      // Run Benchmark
+      const runs = 10;
+      let syncDeflateTotal = 0;
+      let syncInflateTotal = 0;
+      let asyncDeflateTotal = 0;
+      let asyncInflateTotal = 0;
+
+      for (let i = 0; i < runs; i++) {
+        const startSyncDeflate = performance.now();
+        const syncCompressed = deflate(inputBuffer);
+        syncDeflateTotal += performance.now() - startSyncDeflate;
+
+        const startSyncInflate = performance.now();
+        inflate(syncCompressed);
+        syncInflateTotal += performance.now() - startSyncInflate;
+
+        const startAsyncDeflate = performance.now();
+        const asyncCompressed = await deflateAsync(inputBuffer);
+        asyncDeflateTotal += performance.now() - startAsyncDeflate;
+
+        const startAsyncInflate = performance.now();
+        await inflateAsync(asyncCompressed);
+        asyncInflateTotal += performance.now() - startAsyncInflate;
+      }
+
+      setBenchmarkResult({
+        sync: {
+          deflate: syncDeflateTotal / runs,
+          inflate: syncInflateTotal / runs,
+        },
+        async: {
+          deflate: asyncDeflateTotal / runs,
+          inflate: asyncInflateTotal / runs,
+        },
+      });
 
       const compressionRatio = (
         (1 - compressed.byteLength / inputBuffer.byteLength) *
@@ -107,6 +147,45 @@ export default function App() {
               Saved: {originalSize - (compressedSize || 0)} bytes (
               {((1 - (compressedSize || 0) / originalSize) * 100).toFixed(2)}%)
             </Text>
+          </View>
+        )}
+
+        {benchmarkResult && (
+          <View style={styles.benchmarkContainer}>
+            <Text style={styles.statsTitle}>Benchmark (avg of 10 runs):</Text>
+            <View style={styles.benchmarkRow}>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.benchmarkLabel}>Method</Text>
+              </View>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.benchmarkLabel}>Sync</Text>
+              </View>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.benchmarkLabel}>Async</Text>
+              </View>
+            </View>
+            <View style={styles.benchmarkRow}>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.stat}>Deflate</Text>
+              </View>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.stat}>{benchmarkResult.sync.deflate.toFixed(3)}ms</Text>
+              </View>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.stat}>{benchmarkResult.async.deflate.toFixed(3)}ms</Text>
+              </View>
+            </View>
+            <View style={styles.benchmarkRow}>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.stat}>Inflate</Text>
+              </View>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.stat}>{benchmarkResult.sync.inflate.toFixed(3)}ms</Text>
+              </View>
+              <View style={styles.benchmarkCell}>
+                <Text style={styles.stat}>{benchmarkResult.async.inflate.toFixed(3)}ms</Text>
+              </View>
+            </View>
           </View>
         )}
 
@@ -180,6 +259,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 5,
     color: "#333",
+  },
+  benchmarkContainer: {
+    backgroundColor: "#f1f8e9",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  benchmarkRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#c8e6c9",
+    paddingVertical: 5,
+  },
+  benchmarkCell: {
+    flex: 1,
+    alignItems: "center",
+  },
+  benchmarkLabel: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#2e7d32",
   },
   output: {
     backgroundColor: "#fff",

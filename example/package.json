@@ -10,6 +10,7 @@
     "build:ios": "react-native build-ios --mode Debug"
   },
   "dependencies": {
+    "@strawberrytech/react-native-nitro-zlib": "workspace:*",
     "react": "19.2.0",
     "react-native": "0.83.0",
     "react-native-fast-encoder": "^0.3.1",
