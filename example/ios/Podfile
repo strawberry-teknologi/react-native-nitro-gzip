@@ -33,5 +33,12 @@ target 'NitroZlibExample' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Force iOS 16.0 deployment target for all pods (required for CxxStdlib)
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      end
+    end
   end
 end
