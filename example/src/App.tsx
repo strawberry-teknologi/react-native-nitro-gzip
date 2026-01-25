@@ -1,3 +1,9 @@
+import {
+  deflate,
+  deflateAsync,
+  inflate,
+  inflateAsync,
+} from "@strawberrytech/react-native-nitro-zlib";
 import { useState } from "react";
 import {
   Alert,
@@ -9,11 +15,10 @@ import {
   View,
 } from "react-native";
 import TextEncoder from "react-native-fast-encoder";
-import { deflate, inflate, deflateAsync, inflateAsync } from "react-native-nitro-zlib";
 
 export default function App() {
   const [inputText, setInputText] = useState(
-    "Hello, World! This is a test string for compression."
+    "Hello, World! This is a test string for compression.",
   );
   const [compressedSize, setCompressedSize] = useState<number | null>(null);
   const [decompressedText, setDecompressedText] = useState<string>("");
@@ -40,7 +45,7 @@ export default function App() {
       const inputBuffer = stringToArrayBuffer(inputText);
       setOriginalSize(inputBuffer.byteLength);
 
-      const compressed = useAsync 
+      const compressed = useAsync
         ? await deflateAsync(inputBuffer)
         : deflate(inputBuffer);
       setCompressedSize(compressed.byteLength);
@@ -94,12 +99,12 @@ export default function App() {
 
       Alert.alert(
         "Success",
-        `${useAsync ? 'Async' : 'Sync'} Operation\nOriginal: ${inputBuffer.byteLength} bytes\nCompressed: ${compressed.byteLength} bytes\nCompression: ${compressionRatio}%`
+        `${useAsync ? "Async" : "Sync"} Operation\nOriginal: ${inputBuffer.byteLength} bytes\nCompressed: ${compressed.byteLength} bytes\nCompression: ${compressionRatio}%`,
       );
     } catch (error) {
       Alert.alert(
         "Error",
-        error instanceof Error ? error.message : "Unknown error"
+        error instanceof Error ? error.message : "Unknown error",
       );
     } finally {
       setIsProcessing(false);
@@ -122,15 +127,19 @@ export default function App() {
 
         <View style={styles.buttonContainer}>
           <View style={{ marginBottom: 10 }}>
-            <Button 
-              title={isProcessing ? "Processing..." : "Sync Compress & Decompress"} 
-              onPress={() => handleCompress(false)} 
+            <Button
+              title={
+                isProcessing ? "Processing..." : "Sync Compress & Decompress"
+              }
+              onPress={() => handleCompress(false)}
               disabled={isProcessing}
             />
           </View>
-          <Button 
-            title={isProcessing ? "Processing..." : "Async Compress & Decompress"} 
-            onPress={() => handleCompress(true)} 
+          <Button
+            title={
+              isProcessing ? "Processing..." : "Async Compress & Decompress"
+            }
+            onPress={() => handleCompress(true)}
             disabled={isProcessing}
             color="#4caf50"
           />
@@ -169,10 +178,14 @@ export default function App() {
                 <Text style={styles.stat}>Deflate</Text>
               </View>
               <View style={styles.benchmarkCell}>
-                <Text style={styles.stat}>{benchmarkResult.sync.deflate.toFixed(3)}ms</Text>
+                <Text style={styles.stat}>
+                  {benchmarkResult.sync.deflate.toFixed(3)}ms
+                </Text>
               </View>
               <View style={styles.benchmarkCell}>
-                <Text style={styles.stat}>{benchmarkResult.async.deflate.toFixed(3)}ms</Text>
+                <Text style={styles.stat}>
+                  {benchmarkResult.async.deflate.toFixed(3)}ms
+                </Text>
               </View>
             </View>
             <View style={styles.benchmarkRow}>
@@ -180,10 +193,14 @@ export default function App() {
                 <Text style={styles.stat}>Inflate</Text>
               </View>
               <View style={styles.benchmarkCell}>
-                <Text style={styles.stat}>{benchmarkResult.sync.inflate.toFixed(3)}ms</Text>
+                <Text style={styles.stat}>
+                  {benchmarkResult.sync.inflate.toFixed(3)}ms
+                </Text>
               </View>
               <View style={styles.benchmarkCell}>
-                <Text style={styles.stat}>{benchmarkResult.async.inflate.toFixed(3)}ms</Text>
+                <Text style={styles.stat}>
+                  {benchmarkResult.async.inflate.toFixed(3)}ms
+                </Text>
               </View>
             </View>
           </View>
