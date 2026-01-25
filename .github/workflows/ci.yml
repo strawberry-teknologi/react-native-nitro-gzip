@@ -79,7 +79,7 @@ jobs:
         run: yarn prepare
 
       - name: Publish to NPM
-        run: npm publish --access public --provenance
+        run: npm publish
 
   publish-jsr:
     runs-on: ubuntu-latest
